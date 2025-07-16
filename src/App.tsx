@@ -27,7 +27,12 @@ const clearActiveGame = () => {
   localStorage.removeItem('activeGame');
 };
 
-function HistoryPanel({ history, currentPage, setCurrentPage, totalPages }) {
+function HistoryPanel({ history, currentPage, setCurrentPage, totalPages }: {
+  history: any[];
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  totalPages: number;
+}) {
   if (!history.length) return null;
   return (
     <div className="mt-8 w-full max-w-xl bg-[#232e38] rounded-xl p-4">
@@ -226,7 +231,9 @@ const App = () => {
 
   const handleSaveNickname = async () => {
     setNickname(inputNickname);
-    setStoredNickname(account, inputNickname);
+    if (account) {
+      setStoredNickname(account, inputNickname);
+    }
     setEditingNickname(false);
     if (signer && inputNickname) {
       try {
@@ -278,7 +285,9 @@ const App = () => {
       setDice2(null);
       setMessage(null);
       setCanBet(false);
-      fetchBalance(provider, account);
+      if (account) {
+        fetchBalance(provider, account);
+      }
     } catch (e) {
       setTxStatus('Transaction error');
     }
@@ -385,7 +394,9 @@ const App = () => {
       try { new Audio('/sounds/Cashout.mp3').play(); } catch {}
       setMessage(`You cashed out: ${roundedProfit} STT. Place a new bet to continue playing.`);
       setCanBet(true);
-      fetchBalance(provider, account);
+      if (account) {
+        fetchBalance(provider, account);
+      }
       fetchContractBalance(provider);
       clearActiveGame();
       setGameHistory(h => [...h, {
@@ -403,21 +414,7 @@ const App = () => {
     }
   };
 
-  const handleRestart = () => {
-    setBoard(null);
-    setPath(null);
-    setPosition(0);
-    setStep(0);
-    setProfit(0);
-    setAccumulatedMult(1);
-    setMultHistory([]);
-    setGameActive(false);
-    setLost(false);
-    setDice1(null);
-    setDice2(null);
-    setMessage(null);
-    clearActiveGame();
-  };
+
 
   const handleDisconnect = () => {
     setIsConnected(false);
@@ -486,7 +483,12 @@ const App = () => {
             </div>
           )}
           <div className="mb-4 text-2xl font-bold text-yellow-300">Current Multiplier: {accumulatedMult.toFixed(2)}x</div>
-          {!board ? (
+          {message && (
+            <div className={`mb-4 text-lg font-bold ${lost ? 'text-red-400' : 'text-green-300'}`}>{
+              message.replace(/(\d+\.\d{3})\d*/g, '$1')
+            }</div>
+          )}
+          {!gameActive ? (
             <div className="mb-12">
               <div className="mb-6 text-center text-white font-bold text-lg">Preview: {difficultyLabels[difficulty]}</div>
               <div className="flex flex-col items-center">
@@ -502,8 +504,8 @@ const App = () => {
             <>
               <GameBoard
                 step={step}
-                board={board}
-                path={path}
+                board={board ?? undefined}
+                path={path ?? undefined}
                 position={position}
                 lost={lost}
                 dice1={dice1}
@@ -530,19 +532,7 @@ const App = () => {
             </>
           )}
           {txStatus && <div className="mb-2 text-sm text-yellow-300">{txStatus}</div>}
-          {message && (
-            <div className={`mt-6 text-lg font-bold ${lost ? 'text-red-400' : 'text-green-300'}`}>{
-              message.replace(/(\d+\.\d{3})\d*/g, '$1')
-            }</div>
-          )}
-          {!gameActive && (step > 0 || lost) && (
-            <button
-              className="mt-8 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded text-lg"
-              onClick={handleRestart}
-            >
-              Restart
-            </button>
-          )}
+
         </div>
       </div>
       <div className="w-full flex flex-col items-center">
