@@ -266,7 +266,7 @@ const App = () => {
 
   const handleConnect = async () => {
     try {
-      setTxStatus('Connecting to Somnia Testnet...');
+      setTxStatus('Connecting wallet and switching to Somnia Testnet...');
       const { provider, signer } = await connectWallet();
       const address = await signer.getAddress();
       setSigner(signer);
@@ -274,7 +274,7 @@ const App = () => {
       setAccount(address);
       setIsConnected(true);
       fetchBalance(provider, address);
-      setTxStatus('Connected to Somnia Testnet!');
+      setTxStatus('Connected! Network automatically switched to Somnia Testnet.');
       setTimeout(() => setTxStatus(null), 3000);
     } catch (e: any) {
       console.error('Connection error:', e);

@@ -319,7 +319,19 @@ export async function switchToSomniaTestnet() {
   if (!window.ethereum) throw new Error('MetaMask not found');
   
   try {
+    // Сначала проверяем текущую сеть
+    const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+    console.log('Current chainId:', currentChainId);
+    console.log('Target chainId:', SOMNIA_TESTNET.chainId);
+    
+    // Если уже на нужной сети, ничего не делаем
+    if (currentChainId === SOMNIA_TESTNET.chainId) {
+      console.log('Already on Somnia Testnet');
+      return;
+    }
+    
     // Попытка переключиться на сеть Somnia Testnet
+    console.log('Switching to Somnia Testnet...');
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: SOMNIA_TESTNET.chainId }],
@@ -351,6 +363,16 @@ export async function connectWallet() {
   if (!window.ethereum) throw new Error('MetaMask not found');
   
   console.log('Starting wallet connection...');
+  
+  // Сначала пытаемся переключиться на Somnia Testnet
+  try {
+    console.log('Attempting to switch to Somnia Testnet...');
+    await switchToSomniaTestnet();
+    console.log('Successfully switched to Somnia Testnet');
+  } catch (switchError: any) {
+    console.warn('Failed to switch to Somnia Testnet:', switchError.message);
+    // Продолжаем подключение даже если переключение не удалось
+  }
   
   // Запрашиваем аккаунты
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -426,7 +448,14 @@ export async function checkNetwork() {
   
   if (chainId !== SOMNIA_TESTNET.chainId) {
     console.warn(`Warning: Not on Somnia Testnet. Current: ${chainId}, Expected: ${SOMNIA_TESTNET.chainId}`);
-    // Временно отключаем строгую проверку сети
-    // throw new Error(`Please switch to Somnia Testnet. Current network: ${chainId}`);
+    // Пытаемся автоматически переключиться на нужную сеть
+    try {
+      await switchToSomniaTestnet();
+      console.log('Successfully switched to Somnia Testnet during transaction');
+    } catch (switchError: any) {
+      console.warn('Failed to switch network during transaction:', switchError.message);
+      // Не блокируем транзакцию, но предупреждаем пользователя
+      throw new Error(`Please switch to Somnia Testnet in MetaMask. Current network: ${chainId}`);
+    }
   }
 }
