@@ -102,6 +102,7 @@ const App = () => {
   const [contractBalance, setContractBalance] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showWarning, setShowWarning] = useState(true);
+  const [isWrongNetwork, setIsWrongNetwork] = useState(false);
   const GAMES_PER_PAGE = 10;
   const totalPages = Math.ceil(gameHistory.length / GAMES_PER_PAGE) || 1;
   const paginatedHistory = gameHistory.slice((currentPage-1)*GAMES_PER_PAGE, currentPage*GAMES_PER_PAGE);
@@ -221,6 +222,29 @@ const App = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Listen for network changes
+  useEffect(() => {
+    if (!window.ethereum) return;
+
+    const handleChainChanged = async () => {
+      try {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        setIsWrongNetwork(chainId !== '0xc4a8');
+      } catch (error) {
+        console.error('Error checking chain ID:', error);
+      }
+    };
+
+    window.ethereum.on('chainChanged', handleChainChanged);
+    
+    // Check initial network
+    handleChainChanged();
+
+    return () => {
+      window.ethereum.removeListener('chainChanged', handleChainChanged);
+    };
+  }, []);
+
   useEffect(() => {
     async function checkConnection() {
       if (window.ethereum) {
@@ -233,6 +257,10 @@ const App = () => {
           setAccount(address);
           setIsConnected(true);
           fetchBalance(provider, address);
+          
+          // Check network
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          setIsWrongNetwork(chainId !== '0xc4a8');
         }
       }
     }
@@ -279,8 +307,10 @@ const App = () => {
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
       if (chainId === '0xc4a8') {
         setTxStatus('Connected! Successfully switched to Somnia Testnet.');
+        setIsWrongNetwork(false);
       } else {
         setTxStatus('Connected! Please switch to Somnia Testnet manually for full functionality.');
+        setIsWrongNetwork(true);
       }
       setTimeout(() => setTxStatus(null), 3000);
     } catch (e: any) {
@@ -472,10 +502,11 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#1a232b] flex flex-col items-center justify-center">
       {/* Network Warning */}
-      {showWarning && (
+      {isWrongNetwork && isConnected && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-bold transition-opacity duration-500">
-            ⚠️ TESTNET ONLY - Use Somnia Testnet (STT tokens)
+          <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-bold transition-opacity duration-500 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>Please switch to Somnia Testnet (Chain ID: 50312) to play</span>
           </div>
         </div>
       )}
