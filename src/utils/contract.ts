@@ -339,8 +339,11 @@ export async function switchToSomniaTestnet() {
     console.log('Successfully switched to Somnia Testnet');
   } catch (switchError: any) {
     console.log('Switch error:', switchError);
-    // Если сеть не добавлена, добавляем её
-    if (switchError.code === 4902) {
+    console.log('Switch error code:', switchError.code);
+    console.log('Switch error message:', switchError.message);
+    
+    // Если сеть не добавлена (код 4902) или не распознается, добавляем её
+    if (switchError.code === 4902 || switchError.message?.includes('Unrecognized chain ID')) {
       try {
         console.log('Adding Somnia Testnet to MetaMask...');
         await window.ethereum.request({
@@ -348,6 +351,17 @@ export async function switchToSomniaTestnet() {
           params: [SOMNIA_TESTNET],
         });
         console.log('Successfully added Somnia Testnet to MetaMask');
+        
+        // После добавления пытаемся переключиться снова
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: SOMNIA_TESTNET.chainId }],
+          });
+          console.log('Successfully switched to Somnia Testnet after adding');
+        } catch (finalSwitchError: any) {
+          console.warn('Failed to switch after adding network:', finalSwitchError.message);
+        }
       } catch (addError: any) {
         console.error('Add network error:', addError);
         throw new Error(`Failed to add Somnia Testnet to MetaMask: ${addError.message || 'Unknown error'}`);
@@ -371,6 +385,7 @@ export async function connectWallet() {
     console.log('Successfully switched to Somnia Testnet');
   } catch (switchError: any) {
     console.warn('Failed to switch to Somnia Testnet:', switchError.message);
+    console.warn('Continuing with connection on current network...');
     // Продолжаем подключение даже если переключение не удалось
   }
   
@@ -388,6 +403,13 @@ export async function connectWallet() {
   // Проверяем текущую сеть
   const network = await provider.getNetwork();
   console.log('Current network:', network);
+  
+  // Проверяем, что мы на правильной сети
+  const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+  if (chainId !== SOMNIA_TESTNET.chainId) {
+    console.warn(`Warning: Connected on wrong network. Current: ${chainId}, Expected: ${SOMNIA_TESTNET.chainId}`);
+    console.warn('Some features may not work correctly. Please switch to Somnia Testnet manually.');
+  }
   
   return { provider, signer };
 }

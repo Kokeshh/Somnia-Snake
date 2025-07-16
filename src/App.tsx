@@ -274,7 +274,14 @@ const App = () => {
       setAccount(address);
       setIsConnected(true);
       fetchBalance(provider, address);
-      setTxStatus('Connected! Network automatically switched to Somnia Testnet.');
+      
+      // Проверяем, на какой сети мы подключились
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (chainId === '0x1a4') {
+        setTxStatus('Connected! Successfully switched to Somnia Testnet.');
+      } else {
+        setTxStatus('Connected! Please switch to Somnia Testnet manually for full functionality.');
+      }
       setTimeout(() => setTxStatus(null), 3000);
     } catch (e: any) {
       console.error('Connection error:', e);
