@@ -200,8 +200,16 @@ const App = () => {
 
   useEffect(() => {
     if (!account || !provider) return;
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       fetchBalance(provider, account);
+      
+      // Also check network status periodically
+      try {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        setIsWrongNetwork(chainId !== '0xc4a8');
+      } catch (error) {
+        console.error('Error checking network in interval:', error);
+      }
     }, 10000);
     return () => clearInterval(interval);
   }, [account, provider]);
@@ -229,19 +237,37 @@ const App = () => {
     const handleChainChanged = async () => {
       try {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        console.log('Chain changed to:', chainId);
+        console.log('Expected chain:', '0xc4a8');
+        console.log('Is wrong network:', chainId !== '0xc4a8');
         setIsWrongNetwork(chainId !== '0xc4a8');
       } catch (error) {
         console.error('Error checking chain ID:', error);
       }
     };
 
+    const handleAccountsChanged = async () => {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts && accounts.length > 0) {
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          console.log('Accounts changed, chain ID:', chainId);
+          setIsWrongNetwork(chainId !== '0xc4a8');
+        }
+      } catch (error) {
+        console.error('Error checking accounts:', error);
+      }
+    };
+
     window.ethereum.on('chainChanged', handleChainChanged);
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
     
     // Check initial network
     handleChainChanged();
 
     return () => {
       window.ethereum.removeListener('chainChanged', handleChainChanged);
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
     };
   }, []);
 
@@ -507,6 +533,20 @@ const App = () => {
           <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-bold transition-opacity duration-500 flex items-center gap-2">
             <span>⚠️</span>
             <span>Please switch to Somnia Testnet (Chain ID: 50312) to play</span>
+            <button 
+              onClick={async () => {
+                try {
+                  const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                  console.log('Manual check - Chain ID:', chainId);
+                  setIsWrongNetwork(chainId !== '0xc4a8');
+                } catch (error) {
+                  console.error('Manual check error:', error);
+                }
+              }}
+              className="ml-2 bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs"
+            >
+              Check
+            </button>
           </div>
         </div>
       )}
