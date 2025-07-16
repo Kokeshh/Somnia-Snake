@@ -2,6 +2,19 @@ import { ethers } from 'ethers';
 
 // TODO: замените на реальный адрес после деплоя
 export const CONTRACT_ADDRESS = '0x8F3fCCccE97b4873003AB34AfF9053D1c64b5B61';
+
+// Somnia Testnet configuration
+export const SOMNIA_TESTNET = {
+  chainId: '0x1a4', // 420 in hex
+  chainName: 'Somnia Testnet',
+  nativeCurrency: {
+    name: 'STT',
+    symbol: 'STT',
+    decimals: 18,
+  },
+  rpcUrls: ['https://testnet-rpc.somnia.zone'],
+  blockExplorerUrls: ['https://testnet-explorer.somnia.zone'],
+};
 export const CONTRACT_ABI = [
 	{
 		"inputs": [],
@@ -302,8 +315,39 @@ declare global {
   }
 }
 
+export async function switchToSomniaTestnet() {
+  if (!window.ethereum) throw new Error('MetaMask not found');
+  
+  try {
+    // Попытка переключиться на сеть Somnia Testnet
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: SOMNIA_TESTNET.chainId }],
+    });
+  } catch (switchError: any) {
+    // Если сеть не добавлена, добавляем её
+    if (switchError.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [SOMNIA_TESTNET],
+        });
+      } catch (addError) {
+        throw new Error('Failed to add Somnia Testnet to MetaMask');
+      }
+    } else {
+      throw new Error('Failed to switch to Somnia Testnet');
+    }
+  }
+}
+
 export async function connectWallet() {
   if (!window.ethereum) throw new Error('MetaMask not found');
+  
+  // Сначала переключаемся на Somnia Testnet
+  await switchToSomniaTestnet();
+  
+  // Затем запрашиваем аккаунты
   await window.ethereum.request({ method: 'eth_requestAccounts' });
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = await provider.getSigner();
@@ -355,4 +399,13 @@ export async function changeNickname(signer: any, newNickname: string) {
   const tx = await contract.changeNickname(newNickname);
   await tx.wait();
   return tx;
+}
+
+export async function checkNetwork() {
+  if (!window.ethereum) throw new Error('MetaMask not found');
+  
+  const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+  if (chainId !== SOMNIA_TESTNET.chainId) {
+    throw new Error(`Please switch to Somnia Testnet. Current network: ${chainId}`);
+  }
 }

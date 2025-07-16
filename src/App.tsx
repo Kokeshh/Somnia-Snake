@@ -3,7 +3,7 @@ import BetPanel from './components/BetPanel.tsx';
 import GameBoard from './components/GameBoard.tsx';
 import Leaderboard from './components/Leaderboard.tsx';
 import { generateBoard, generatePath, BoardCell } from './utils/gameLogic.ts';
-import { connectWallet, placeBet, cashout, getContractBalance, resetBet, changeNickname } from './utils/contract.ts';
+import { connectWallet, placeBet, cashout, getContractBalance, resetBet, changeNickname, checkNetwork } from './utils/contract.ts';
 import { ethers } from 'ethers';
 
 function getRandomInt(min: number, max: number) {
@@ -237,20 +237,26 @@ const App = () => {
     setEditingNickname(false);
     if (signer && inputNickname) {
       try {
+        await checkNetwork();
         await changeNickname(signer, inputNickname);
         setTxStatus('Nickname updated on blockchain');
         if (typeof window !== 'undefined') {
           const ev = new CustomEvent('refreshLeaderboard');
           window.dispatchEvent(ev);
         }
-      } catch (e) {
-        setTxStatus('Error updating nickname in contract');
+      } catch (e: any) {
+        if (e.message.includes('Somnia Testnet')) {
+          setTxStatus('Please switch to Somnia Testnet');
+        } else {
+          setTxStatus('Error updating nickname: ' + (e.message || 'Unknown error'));
+        }
       }
     }
   };
 
   const handleConnect = async () => {
     try {
+      setTxStatus('Connecting to Somnia Testnet...');
       const { provider, signer } = await connectWallet();
       const address = await signer.getAddress();
       setSigner(signer);
@@ -258,16 +264,27 @@ const App = () => {
       setAccount(address);
       setIsConnected(true);
       fetchBalance(provider, address);
-    } catch (e) {
-      setTxStatus('MetaMask connection error');
+      setTxStatus('Connected to Somnia Testnet!');
+      setTimeout(() => setTxStatus(null), 3000);
+    } catch (e: any) {
+      console.error('Connection error:', e);
+      if (e.message.includes('Somnia Testnet')) {
+        setTxStatus('Please switch to Somnia Testnet in MetaMask');
+      } else if (e.message.includes('MetaMask not found')) {
+        setTxStatus('Please install MetaMask');
+      } else {
+        setTxStatus('Connection error: ' + (e.message || 'Unknown error'));
+      }
     }
   };
 
   const handleBet = async ({ amount, difficulty }: any) => {
     setBet(amount);
     setDifficulty(difficulty);
-    setTxStatus('Sending transaction...');
+    setTxStatus('Checking network...');
     try {
+      await checkNetwork();
+      setTxStatus('Sending transaction...');
       await placeBet(signer, nickname, amount);
       setTxStatus('Bet placed!');
       const b = generateBoard(difficulty);
@@ -383,9 +400,11 @@ const App = () => {
 
   const handleCashout = async () => {
     setGameActive(false);
-    setTxStatus('Payout...');
+    setTxStatus('Checking network...');
     setCashoutPending(true);
     try {
+      await checkNetwork();
+      setTxStatus('Payout...');
       const roundedProfit = Number(profit).toFixed(3);
       const tx = await cashout(signer, roundedProfit);
       setTxStatus('Waiting for transaction confirmation...');
@@ -435,6 +454,13 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-[#1a232b] flex flex-col items-center justify-center">
+      {/* Network Warning */}
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-bold">
+          ⚠️ TESTNET ONLY - Use Somnia Testnet (STT tokens)
+        </div>
+      </div>
+      
       <div className="w-full max-w-5xl p-8 flex flex-row items-start gap-12">
         <div className="flex flex-col items-center w-full max-w-xs">
           {editingNickname ? (
