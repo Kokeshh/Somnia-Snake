@@ -14,6 +14,7 @@ export const SOMNIA_TESTNET = {
   },
   rpcUrls: ['https://testnet-rpc.somnia.zone'],
   blockExplorerUrls: ['https://testnet-explorer.somnia.zone'],
+  iconUrls: ['https://testnet-explorer.somnia.zone/favicon.ico'],
 };
 export const CONTRACT_ABI = [
 	{
@@ -324,19 +325,25 @@ export async function switchToSomniaTestnet() {
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: SOMNIA_TESTNET.chainId }],
     });
+    console.log('Successfully switched to Somnia Testnet');
   } catch (switchError: any) {
+    console.log('Switch error:', switchError);
     // Если сеть не добавлена, добавляем её
     if (switchError.code === 4902) {
       try {
+        console.log('Adding Somnia Testnet to MetaMask...');
         await window.ethereum.request({
           method: 'wallet_addEthereumChain',
           params: [SOMNIA_TESTNET],
         });
-      } catch (addError) {
-        throw new Error('Failed to add Somnia Testnet to MetaMask');
+        console.log('Successfully added Somnia Testnet to MetaMask');
+      } catch (addError: any) {
+        console.error('Add network error:', addError);
+        throw new Error(`Failed to add Somnia Testnet to MetaMask: ${addError.message || 'Unknown error'}`);
       }
     } else {
-      throw new Error('Failed to switch to Somnia Testnet');
+      console.error('Switch network error:', switchError);
+      throw new Error(`Failed to switch to Somnia Testnet: ${switchError.message || 'Unknown error'}`);
     }
   }
 }
@@ -344,11 +351,27 @@ export async function switchToSomniaTestnet() {
 export async function connectWallet() {
   if (!window.ethereum) throw new Error('MetaMask not found');
   
-  // Сначала переключаемся на Somnia Testnet
-  await switchToSomniaTestnet();
+  // Временно отключаем автоматическое переключение сети для тестирования
+  const AUTO_SWITCH_NETWORK = false; // Измените на true для включения
+  
+  if (AUTO_SWITCH_NETWORK) {
+    try {
+      // Сначала переключаемся на Somnia Testnet
+      await switchToSomniaTestnet();
+    } catch (error: any) {
+      console.error('Network switch error:', error);
+      // Если не удалось переключить сеть, продолжаем с текущей сетью
+      // но предупреждаем пользователя
+      console.warn('Could not switch to Somnia Testnet, continuing with current network');
+    }
+  }
   
   // Затем запрашиваем аккаунты
-  await window.ethereum.request({ method: 'eth_requestAccounts' });
+  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  if (!accounts || accounts.length === 0) {
+    throw new Error('No accounts found. Please connect your wallet.');
+  }
+  
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = await provider.getSigner();
   return { provider, signer };
