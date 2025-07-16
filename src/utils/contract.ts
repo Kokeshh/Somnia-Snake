@@ -12,7 +12,7 @@ export const SOMNIA_TESTNET = {
     symbol: 'STT',
     decimals: 18,
   },
-  rpcUrls: ['https://testnet-rpc.somnia.zone'],
+  rpcUrls: ['https://dream-rpc.somnia.network/'],
   blockExplorerUrls: ['https://testnet-explorer.somnia.zone'],
 };
 export const CONTRACT_ABI = [
