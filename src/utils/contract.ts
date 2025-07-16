@@ -5,7 +5,7 @@ export const CONTRACT_ADDRESS = '0x8F3fCCccE97b4873003AB34AfF9053D1c64b5B61';
 
 // Somnia Testnet configuration
 export const SOMNIA_TESTNET = {
-  chainId: '0xc4d8', // 50344 in hex
+  chainId: '0xc4a8', // 50312 in hex
   chainName: 'Somnia Testnet',
   nativeCurrency: {
     name: 'STT',
