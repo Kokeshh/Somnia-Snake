@@ -277,7 +277,7 @@ const App = () => {
       
       // Проверяем, на какой сети мы подключились
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (chainId === '0x1a4') {
+      if (chainId === '0xc4a8') {
         setTxStatus('Connected! Successfully switched to Somnia Testnet.');
       } else {
         setTxStatus('Connected! Please switch to Somnia Testnet manually for full functionality.');
