@@ -342,30 +342,10 @@ export async function switchToSomniaTestnet() {
     console.log('Switch error code:', switchError.code);
     console.log('Switch error message:', switchError.message);
     
-    // Если сеть не добавлена (код 4902 или unrecognized chain ID), предлагаем добавить
+    // Если сеть не найдена, просто предупреждаем пользователя
     if (switchError.code === 4902 || switchError.message?.includes('Unrecognized chain ID')) {
-      console.warn('Somnia Testnet not found in MetaMask. Adding network...');
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [SOMNIA_TESTNET],
-        });
-        console.log('Successfully added Somnia Testnet to MetaMask');
-        
-        // После добавления пытаемся переключиться снова
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: SOMNIA_TESTNET.chainId }],
-          });
-          console.log('Successfully switched to Somnia Testnet after adding');
-        } catch (finalSwitchError: any) {
-          console.warn('Failed to switch after adding network:', finalSwitchError.message);
-        }
-      } catch (addError: any) {
-        console.error('Add network error:', addError);
-        throw new Error(`Failed to add Somnia Testnet to MetaMask: ${addError.message || 'Unknown error'}`);
-      }
+      console.warn('Somnia Testnet not found in MetaMask. Please add it manually.');
+      throw new Error('Somnia Testnet not found in your wallet. Please add it manually or switch to it if already added.');
     } else {
       console.error('Switch network error:', switchError);
       throw new Error(`Failed to switch to Somnia Testnet: ${switchError.message || 'Unknown error'}`);
@@ -377,17 +357,6 @@ export async function connectWallet() {
   if (!window.ethereum) throw new Error('MetaMask not found');
   
   console.log('Starting wallet connection...');
-  
-  // Сначала пытаемся переключиться на Somnia Testnet
-  try {
-    console.log('Attempting to switch to Somnia Testnet...');
-    await switchToSomniaTestnet();
-    console.log('Successfully switched to Somnia Testnet');
-  } catch (switchError: any) {
-    console.warn('Failed to switch to Somnia Testnet:', switchError.message);
-    console.warn('Continuing with connection on current network...');
-    // Продолжаем подключение даже если переключение не удалось
-  }
   
   // Запрашиваем аккаунты
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -470,14 +439,6 @@ export async function checkNetwork() {
   
   if (chainId !== SOMNIA_TESTNET.chainId) {
     console.warn(`Warning: Not on Somnia Testnet. Current: ${chainId}, Expected: ${SOMNIA_TESTNET.chainId}`);
-    // Пытаемся переключиться на нужную сеть
-    try {
-      await switchToSomniaTestnet();
-      console.log('Successfully switched to Somnia Testnet during transaction');
-    } catch (switchError: any) {
-      console.warn('Failed to switch network during transaction:', switchError.message);
-      // Не блокируем транзакцию, но предупреждаем пользователя
-      throw new Error(`Please switch to Somnia Testnet in MetaMask. Current network: ${chainId}`);
-    }
+    throw new Error(`Please switch to Somnia Testnet in MetaMask. Current network: ${chainId}`);
   }
 }
