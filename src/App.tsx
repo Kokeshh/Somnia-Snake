@@ -203,13 +203,13 @@ const App = () => {
     const interval = setInterval(async () => {
       fetchBalance(provider, account);
       
-      // Also check network status periodically
-      try {
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        setIsWrongNetwork(chainId !== '0xc4a8');
-      } catch (error) {
-        console.error('Error checking network in interval:', error);
-      }
+              // Also check network status periodically
+        try {
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          setIsWrongNetwork(chainId !== '0xc488');
+        } catch (error) {
+          console.error('Error checking network in interval:', error);
+        }
     }, 10000);
     return () => clearInterval(interval);
   }, [account, provider]);
@@ -238,9 +238,9 @@ const App = () => {
       try {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('Chain changed to:', chainId);
-        console.log('Expected chain:', '0xc4a8');
-        console.log('Is wrong network:', chainId !== '0xc4a8');
-        setIsWrongNetwork(chainId !== '0xc4a8');
+        console.log('Expected chain:', '0xc488');
+        console.log('Is wrong network:', chainId !== '0xc488');
+        setIsWrongNetwork(chainId !== '0xc488');
       } catch (error) {
         console.error('Error checking chain ID:', error);
       }
@@ -252,7 +252,7 @@ const App = () => {
         if (accounts && accounts.length > 0) {
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
           console.log('Accounts changed, chain ID:', chainId);
-          setIsWrongNetwork(chainId !== '0xc4a8');
+          setIsWrongNetwork(chainId !== '0xc488');
         }
       } catch (error) {
         console.error('Error checking accounts:', error);
@@ -286,7 +286,7 @@ const App = () => {
           
           // Check network
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-          setIsWrongNetwork(chainId !== '0xc4a8');
+          setIsWrongNetwork(chainId !== '0xc488');
         }
       }
     }
@@ -331,7 +331,7 @@ const App = () => {
       
       // Проверяем, на какой сети мы подключились
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (chainId === '0xc4a8') {
+      if (chainId === '0xc488') {
         setTxStatus('Connected! Successfully switched to Somnia Testnet.');
         setIsWrongNetwork(false);
       } else {
@@ -538,7 +538,7 @@ const App = () => {
                 try {
                   const chainId = await window.ethereum.request({ method: 'eth_chainId' });
                   console.log('Manual check - Chain ID:', chainId);
-                  setIsWrongNetwork(chainId !== '0xc4a8');
+                  setIsWrongNetwork(chainId !== '0xc488');
                 } catch (error) {
                   console.error('Manual check error:', error);
                 }
