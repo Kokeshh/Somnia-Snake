@@ -101,6 +101,7 @@ const App = () => {
   });
   const [contractBalance, setContractBalance] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showWarning, setShowWarning] = useState(true);
   const GAMES_PER_PAGE = 10;
   const totalPages = Math.ceil(gameHistory.length / GAMES_PER_PAGE) || 1;
   const paginatedHistory = gameHistory.slice((currentPage-1)*GAMES_PER_PAGE, currentPage*GAMES_PER_PAGE);
@@ -210,6 +211,15 @@ const App = () => {
     const interval = setInterval(() => fetchContractBalance(provider), 10000);
     return () => clearInterval(interval);
   }, [provider]);
+
+  // Auto-hide warning banner after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowWarning(false);
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     async function checkConnection() {
@@ -455,11 +465,13 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#1a232b] flex flex-col items-center justify-center">
       {/* Network Warning */}
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-bold">
-          ⚠️ TESTNET ONLY - Use Somnia Testnet (STT tokens)
+      {showWarning && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-bold transition-opacity duration-500">
+            ⚠️ TESTNET ONLY - Use Somnia Testnet (STT tokens)
+          </div>
         </div>
-      </div>
+      )}
       
       <div className="w-full max-w-5xl p-8 flex flex-row items-start gap-12">
         <div className="flex flex-col items-center w-full max-w-xs">
