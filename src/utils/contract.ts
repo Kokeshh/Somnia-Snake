@@ -305,7 +305,7 @@ declare global {
 export async function connectWallet() {
   if (!window.ethereum) throw new Error('MetaMask not found');
   await window.ethereum.request({ method: 'eth_requestAccounts' });
-  const provider = new ethers.BrowserProvider(window.ethereum);
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = await provider.getSigner();
   return { provider, signer };
 }
@@ -316,13 +316,13 @@ export function getContract(signerOrProvider: any) {
 
 export async function placeBet(signer: any, nickname: string, amount: string) {
   const contract = getContract(signer);
-  const tx = await contract.placeBet(nickname, { value: ethers.parseEther(amount) });
+  const tx = await contract.placeBet(nickname, { value: ethers.utils.parseEther(amount) });
   return tx;
 }
 
 export async function cashout(signer: any, profit: string) {
   const contract = getContract(signer);
-  const tx = await contract.cashout(ethers.parseEther(profit));
+  const tx = await contract.cashout(ethers.utils.parseEther(profit));
   return tx;
 }
 
@@ -340,14 +340,14 @@ export async function getLeaderboard(provider: any) {
   return leaderboard.map((player: any) => ({
     addr: player.addr,
     nickname: player.nickname,
-    totalWinnings: ethers.formatEther(player.totalWinnings)
+    totalWinnings: ethers.utils.formatEther(player.totalWinnings)
   }));
 }
 
 export async function getContractBalance(provider: any) {
   const contract = getContract(provider);
   const balance = await contract.getContractBalance();
-  return ethers.formatEther(balance);
+  return ethers.utils.formatEther(balance);
 }
 
 export async function changeNickname(signer: any, newNickname: string) {
