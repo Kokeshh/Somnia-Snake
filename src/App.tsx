@@ -45,7 +45,7 @@ function HistoryPanel({ history, currentPage, setCurrentPage, totalPages }) {
             <span className={h.result === 'win' ? 'text-green-400' : 'text-red-400'}>{h.result === 'win' ? 'Win' : 'Lose'}</span>
           </div>
         ))}
-      </div>
+          </div>
       {totalPages > 1 && (
         <div className="flex justify-center gap-4 mt-4">
           <button
