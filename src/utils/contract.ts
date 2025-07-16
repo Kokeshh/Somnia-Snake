@@ -342,10 +342,30 @@ export async function switchToSomniaTestnet() {
     console.log('Switch error code:', switchError.code);
     console.log('Switch error message:', switchError.message);
     
-    // Если сеть не добавлена (код 4902), просто предупреждаем пользователя
-    if (switchError.code === 4902) {
-      console.warn('Somnia Testnet not found in MetaMask. Please add it manually.');
-      throw new Error('Somnia Testnet not found in MetaMask. Please add the network manually and try again.');
+    // Если сеть не добавлена (код 4902 или unrecognized chain ID), предлагаем добавить
+    if (switchError.code === 4902 || switchError.message?.includes('Unrecognized chain ID')) {
+      console.warn('Somnia Testnet not found in MetaMask. Adding network...');
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [SOMNIA_TESTNET],
+        });
+        console.log('Successfully added Somnia Testnet to MetaMask');
+        
+        // После добавления пытаемся переключиться снова
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: SOMNIA_TESTNET.chainId }],
+          });
+          console.log('Successfully switched to Somnia Testnet after adding');
+        } catch (finalSwitchError: any) {
+          console.warn('Failed to switch after adding network:', finalSwitchError.message);
+        }
+      } catch (addError: any) {
+        console.error('Add network error:', addError);
+        throw new Error(`Failed to add Somnia Testnet to MetaMask: ${addError.message || 'Unknown error'}`);
+      }
     } else {
       console.error('Switch network error:', switchError);
       throw new Error(`Failed to switch to Somnia Testnet: ${switchError.message || 'Unknown error'}`);
