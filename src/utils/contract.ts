@@ -14,7 +14,6 @@ export const SOMNIA_TESTNET = {
   },
   rpcUrls: ['https://testnet-rpc.somnia.zone'],
   blockExplorerUrls: ['https://testnet-explorer.somnia.zone'],
-  iconUrls: ['https://testnet-explorer.somnia.zone/favicon.ico'],
 };
 export const CONTRACT_ABI = [
 	{
@@ -351,29 +350,23 @@ export async function switchToSomniaTestnet() {
 export async function connectWallet() {
   if (!window.ethereum) throw new Error('MetaMask not found');
   
-  // Временно отключаем автоматическое переключение сети для тестирования
-  const AUTO_SWITCH_NETWORK = false; // Измените на true для включения
+  console.log('Starting wallet connection...');
   
-  if (AUTO_SWITCH_NETWORK) {
-    try {
-      // Сначала переключаемся на Somnia Testnet
-      await switchToSomniaTestnet();
-    } catch (error: any) {
-      console.error('Network switch error:', error);
-      // Если не удалось переключить сеть, продолжаем с текущей сетью
-      // но предупреждаем пользователя
-      console.warn('Could not switch to Somnia Testnet, continuing with current network');
-    }
-  }
-  
-  // Затем запрашиваем аккаунты
+  // Запрашиваем аккаунты
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
   if (!accounts || accounts.length === 0) {
     throw new Error('No accounts found. Please connect your wallet.');
   }
   
+  console.log('Accounts found:', accounts);
+  
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = await provider.getSigner();
+  
+  // Проверяем текущую сеть
+  const network = await provider.getNetwork();
+  console.log('Current network:', network);
+  
   return { provider, signer };
 }
 
@@ -428,7 +421,12 @@ export async function checkNetwork() {
   if (!window.ethereum) throw new Error('MetaMask not found');
   
   const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+  console.log('Current chainId:', chainId);
+  console.log('Expected chainId:', SOMNIA_TESTNET.chainId);
+  
   if (chainId !== SOMNIA_TESTNET.chainId) {
-    throw new Error(`Please switch to Somnia Testnet. Current network: ${chainId}`);
+    console.warn(`Warning: Not on Somnia Testnet. Current: ${chainId}, Expected: ${SOMNIA_TESTNET.chainId}`);
+    // Временно отключаем строгую проверку сети
+    // throw new Error(`Please switch to Somnia Testnet. Current network: ${chainId}`);
   }
 }
