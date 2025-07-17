@@ -302,7 +302,10 @@ const App = () => {
     if (signer && inputNickname) {
       try {
         await checkNetwork();
-        await changeNickname(signer, inputNickname);
+        // Пересоздаём provider и signer на актуальной сети
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const newSigner = provider.getSigner();
+        await changeNickname(newSigner, inputNickname);
         setTxStatus('Nickname updated on blockchain');
         if (typeof window !== 'undefined') {
           const ev = new CustomEvent('refreshLeaderboard');
