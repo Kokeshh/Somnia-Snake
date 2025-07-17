@@ -129,6 +129,20 @@ contract SnakesGame {
     }
 
     function getLeaderboard() external view returns (Player[] memory) {
-        return leaderboard;
+        Player[] memory sorted = new Player[](leaderboard.length);
+        for (uint i = 0; i < leaderboard.length; i++) {
+            sorted[i] = leaderboard[i];
+        }
+        // Сортировка пузырьком (для небольших массивов нормально)
+        for (uint i = 0; i < sorted.length; i++) {
+            for (uint j = i + 1; j < sorted.length; j++) {
+                if (sorted[j].totalWinnings > sorted[i].totalWinnings) {
+                    Player memory temp = sorted[i];
+                    sorted[i] = sorted[j];
+                    sorted[j] = temp;
+                }
+            }
+        }
+        return sorted;
     }
 }
