@@ -503,6 +503,12 @@ const App = () => {
         result: 'win',
       }]);
     } catch (e: any) {
+      // Если пользователь отклонил транзакцию, просто продолжаем игру
+      if (e?.code === 4001 || (e?.message && e.message.toLowerCase().includes('user rejected'))) {
+        setTxStatus(null);
+        setGameActive(true);
+        return;
+      }
       setTxStatus('Payout error: ' + (e?.reason || e?.message || ''));
     } finally {
       setCashoutPending(false);
